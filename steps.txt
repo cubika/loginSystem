@@ -1,0 +1,76 @@
+1.引包，建立package
+	hibernate包，beanUtil包，驱动包
+2.设计domain层，即user对象
+3.设计dao层，确保能正确读写数据库
+4.设计service层，进行封装
+5.设计登录界面
+6.处理客户端和服务器端验证
+
+验证用户是否存在时，findUserByName(String username)
+验证用户名和密码时，findUser(String username,String password)
+
+问题1：service层和dao层的不同
+dao层操作数据库，完成增加用户和查询用户功能，service层对其进行封装，实现注册和登录功能
+
+在dao层测试的时候，出现的错误有：
+hbm映射文件要有DTD声明，否则出现Mapping Error:Unable to readXML
+使用数据库，需要添加驱动jar包，还要对配置文件进行更改
+使用UUID，generator选择uuid，但是domain的类型设置为String即可，不必配置为UUID
+出现Unknown column in field list，可能是数据库中已经有了这个表，然后没有这个column，进入数据库中看一看
+findUser返回List,如果没有结果 ,List为空，这时list.get(0)不是返回null，而是抛出异常，因此应改为条件表达式
+
+登录jsp和注册jsp放到根目录下，提交给各自的servlet，servlet进行验证并调用service层，返回的结果显示页面
+放到WEB-INF的jsp文件夹里
+
+web.UI是什么包？给用户提供界面
+在登录时不需要formbean，在注册时需要formbean
+web.controller下应该有：LoginServlet(仅仅登录，跳转到成功页面)
+
+
+
+servlet的重定向？ response.sendRedirect
+WEB-INF下jsp的路径问题
+WEB-INF下的jsp不能直接访问，所以先访问UIservlet，再转发jsp,再提交servlet处理 
+或者直接将jsp放到WebRoot下，不用转发，直接提交
+
+提交成功跳转时不再用request域，而应该用session域
+
+注销怎么实现？在首页点击注销，然后指向logoutServlet，如果注销成功，发送全局消息，
+显示正在注销，等几秒后跳转到登录界面
+
+等几秒刷新怎么实现？模拟一个http头 	<meta http-equiv="refresh" content="3; url=xxx">
+
+context.xml里更改<Context>为<Context reloadable="false">关闭reload
+
+错误：严重: The web application [/loginSystem] registered the JDBC driver
+ [com.mysql.jdbc.Driver] but failed to unregister it when the web application
+  was stopped. To prevent a memory leak, the JDBC Driver has been 
+  forcibly unregistered.
+解决：是因为mysql 的JDBC驱动放在应用的 WEB-INF\lib 目录下，在重新发布时其加载了两次
+还是没有解决
+
+如果登录，在主页里显示hello，如果未登录，显示登录或注册的提示
+原理，使用jstl的if判断
+
+jstl标签的使用：
+include <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+然后判断为空不用null， 而是 <c:if test="{empty user }">
+jstl1.2 不需要standard.jar，1.1需要
+
+注销时必须将session域的user属性去掉
+
+注册时使用formbean的问题，是在页面中还是在注册servlet中？
+放到Util的类中，写一个静态的request2bean的方法
+在request2bean里面注意使用泛型
+封装到formbean时要用到beanUtil,具体来说就是使用beanUtil的populate填充，并迭代进行赋值，
+遇到转化的问题时需要用ConvertUtil
+
+转化为formbean之后就进行客户端验证,验证代码写在formbean里
+验证错误如何显示？ 在formbean里声明一个map，将错误放到里面
+用户名已存在怎么显示？还是放到这个map里
+request传的是一个formbean整体，这样便于显示
+
+密码加密在什么地方？
+在Service层，进行注册的时候调用 ServiceUtil.md5()
+
+剩下添加验证码，以及生日字段，以及美化等等
